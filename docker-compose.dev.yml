@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=sqlite:////app/data/warehouse.db
+      - SECRET_KEY=miniwms-secret-key-change-in-production
+    command: python src/app.py

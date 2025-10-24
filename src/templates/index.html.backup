@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini-WMS - Sistema de Gerenciamento de Armazém</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border: #dee2e6;
+            --danger: #e63946;
+            --warning: #fca311;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--gray);
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+        }
+        
+        .btn-entry {
+            background-color: #2a9d8f;
+        }
+        
+        .btn-entry:hover {
+            background-color: #21867a;
+        }
+        
+        .btn-exit {
+            background-color: var(--danger);
+        }
+        
+        .btn-exit:hover {
+            background-color: #d90429;
+        }
+        
+        .btn-export {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+        
+        .btn-export:hover {
+            background-color: #e69500;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        .grid-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        
+        .warehouse-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 10px;
+            min-width: 1200px;
+        }
+        
+        .location {
+            aspect-ratio: 1/1;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .location.occupied {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .location-code {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray);
+        }
+        
+        .location-ref {
+            font-size: 0.7rem;
+            color: var(--dark);
+            text-align: center;
+            word-break: break-word;
+        }
+        
+        .location-qty {
+            font-size: 0.8rem;
+            font-weight: 600;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+        }
+        
+        .location.occupied .location-qty {
+            color: var(--primary);
+        }
+        
+        .location.empty {
+            background-color: var(--light-gray);
+        }
+        
+        .location.empty:hover {
+            background-color: #dde0e3;
+        }
+        
+        .location.highlight {
+            border: 2px solid #ff9e00;
+            box-shadow: 0 0 10px rgba(255, 158, 0, 0.5);
+        }
+        
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: var(--light-gray);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: var(--light);
+            font-weight: 600;
+            color: var(--gray);
+        }
+        
+        tr:hover {
+            background-color: var(--light-gray);
+        }
+        
+        .movement-entry {
+            color: #2a9d8f;
+            font-weight: bold;
+        }
+        
+        .movement-exit {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .notification.success {
+            background-color: #2a9d8f;
+        }
+        
+        .notification.error {
+            background-color: var(--danger);
+        }
+        
+        @media (max-width: 768px) {
+            .warehouse-grid {
+                grid-template-columns: repeat(6, 1fr);
+                min-width: 600px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>📦 Mini-WMS - Sistema de Gerenciamento de Armazém</h1>
+            <div>Porta: <span id="currentPort">5000</span></div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="notification" id="notification"></div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalLocations">0</div>
+                <div class="stat-label">Localizações</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="occupiedLocations">0</div>
+                <div class="stat-label">Ocupadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalProducts">0</div>
+                <div class="stat-label">Produtos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalStock">0</div>
+                <div class="stat-label">Itens em Estoque</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="grid">Visualização em Grade</div>
+            <div class="tab" data-tab="table">Tabela de Estoque</div>
+            <div class="tab" data-tab="config">Configurações</div>
+        </div>
+        
+        <div class="tab-content active" id="grid-tab">
+            <div class="controls">
+                <div class="controls-grid">
+                    <div>
+                        <label for="location">Localização</label>
+                        <input type="text" id="location" placeholder="Ex: A001C">
+                        <small>Digite o código da localização</small>
+                    </div>
+                    <div>
+                        <label for="prod">Produto</label>
+                        <select id="prod"></select>
+                    </div>
+                    <div>
+                        <label for="qty">Quantidade</label>
+                        <input type="number" id="qty" min="1" value="1">
+                    </div>
+                    <div>
+                        <button id="entryBtn" class="btn-entry">➕ Entrada</button>
+                    </div>
+                    <div>
+                        <button id="exitBtn" class="btn-exit">➖ Saída</button>
+                    </div>
+                    <div>
+                        <button id="exportBtn" class="btn-export">📄 Exportar CSV</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar localização...">
+            </div>
+            
+            <div class="grid-container">
+                <div class="warehouse-grid" id="warehouseGrid">
+                    <!-- O conteúdo da grade será preenchido dinamicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="table-tab">
+            <div class="table-container">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Localização</th>
+                            <th>Código</th>
+                            <th>Armazém</th>
+                            <th>Ref.</th>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <!-- Preenchido dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="movements-tab">
+            <div class="table-container">
+                <table id="movementsTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Localização</th>
+                            <th>Produto</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="movementsTableBody">
+                        <!-- Preenchido dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="config-tab">
+            <div class="controls">
+                <h3>Importação de Cadastros</h3>
+                <div class="controls-grid">
+                    <div>
+                        <label for="productFile">Importar Produtos (CSV)</label>
+                        <input type="file" id="productFile" accept=".csv">
+                        <button id="importProductsBtn">Importar Produtos</button>
+                    </div>
+                    <div>
+                        <label for="locationFile">Importar Localizações (CSV)</label>
+                        <input type="file" id="locationFile" accept=".csv">
+                        <button id="importLocationsBtn">Importar Localizações</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h3>Adicionar Cadastro Manualmente</h3>
+                <div class="controls-grid">
+                    <div>
+                        <label for="newProductRef">Referência do Produto</label>
+                        <input type="text" id="newProductRef" placeholder="Ex: P1001">
+                    </div>
+                    <div>
+                        <label for="newProductName">Nome do Produto</label>
+                        <input type="text" id="newProductName" placeholder="Ex: CAR BOLA">
+                    </div>
+                    <div>
+                        <button id="addProductBtn">Adicionar Produto</button>
+                    </div>
+                </div>
+                
+                <div class="controls-grid" style="margin-top: 20px;">
+                    <div>
+                        <label for="newLocationCod">Código da Localização</label>
+                        <input type="text" id="newLocationCod" placeholder="Ex: 10000">
+                    </div>
+                    <div>
+                        <label for="newLocationLocal">Localização</label>
+                        <input type="text" id="newLocationLocal" placeholder="Ex: A001C">
+                    </div>
+                    <div>
+                        <label for="newLocationArmazem">Armazém</label>
+                        <input type="text" id="newLocationArmazem" placeholder="Ex: LOG" value="LOG">
+                    </div>
+                    <div>
+                        <button id="addLocationBtn">Adicionar Localização</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração da API
+        const API_BASE = '/api';
+        
+        // Variáveis globais
+        let locations = [];
+        let products = [];
+        let stock = {};
+        let movements = [];
+        
+        // Elementos do DOM
+        const elements = {
+            locationInput: document.getElementById('location'),
+            productSelect: document.getElementById('prod'),
+            quantityInput: document.getElementById('qty'),
+            entryBtn: document.getElementById('entryBtn'),
+            exitBtn: document.getElementById('exitBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            warehouseGrid: document.getElementById('warehouseGrid'),
+            stockTableBody: document.getElementById('stockTableBody'),
+            movementsTableBody: document.getElementById('movementsTableBody'),
+            totalLocations: document.getElementById('totalLocations'),
+            occupiedLocations: document.getElementById('occupiedLocations'),
+            totalProducts: document.getElementById('totalProducts'),
+            totalStock: document.getElementById('totalStock'),
+            notification: document.getElementById('notification'),
+            searchInput: document.getElementById('searchInput'),
+            tabs: document.querySelectorAll('.tab'),
+            tabContents: document.querySelectorAll('.tab-content')
+        };
+        
+        // Função para mostrar notificações
+        function showNotification(message, type = 'success') {
+            elements.notification.textContent = message;
+            elements.notification.className = `notification ${type}`;
+            elements.notification.style.display = 'block';
+            
+            setTimeout(() => {
+                elements.notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Carregar dados iniciais
+        async function loadInitialData() {
+            try {
+                const [productsRes, locationsRes, stockRes] = await Promise.all([
+                    fetch(`${API_BASE}/products`),
+                    fetch(`${API_BASE}/locations`),
+                    fetch(`${API_BASE}/stock`)
+                ]);
+
+                products = await productsRes.json();
+                locations = await locationsRes.json();
+                const stockData = await stockRes.json();
+
+                // Converter stock para o formato esperado - agora usando 'local'
+                stock = {};
+                stockData.forEach(item => {
+                    stock[item.location] = {  // item.location agora é o campo 'local' (A001C, etc.)
+                        ref: item.ref,
+                        qty: item.quantity,
+                        name: item.name,
+                        code: item.location_code
+                    };
+                });
+
+                // Popular dropdown de produtos
+                elements.productSelect.innerHTML = '';
+                products.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.ref;
+                    opt.textContent = `${p.ref} – ${p.name}`;
+                    elements.productSelect.appendChild(opt);
+                });
+
+                renderGrid();
+                updateCounters();
+                renderStockTable();
+
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showNotification('Erro ao carregar dados iniciais', 'error');
+            }
+        }
+        
+        // Atualizar contadores
+        function updateCounters() {
+            elements.totalLocations.textContent = locations.length;
+            elements.totalProducts.textContent = products.length;
+            
+            const occupied = Object.keys(stock).length;
+            elements.occupiedLocations.textContent = occupied;
+            
+            const totalStock = Object.values(stock).reduce((sum, item) => sum + item.qty, 0);
+            elements.totalStock.textContent = totalStock;
+        }
+        
+        // Renderizar grade do armazém
+        function renderGrid() {
+            elements.warehouseGrid.innerHTML = '';
+            
+            // Organizar localizações por armazém e coluna
+            const locationsBySection = {};
+            locations.forEach(loc => {
+                const section = loc.armazem;
+                if (!locationsBySection[section]) {
+                    locationsBySection[section] = [];
+                }
+                locationsBySection[section].push(loc);
+            });
+            
+            // Para cada armazém, criar uma seção
+            Object.keys(locationsBySection).forEach(warehouse => {
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.innerHTML = `<h3 style="grid-column: 1 / -1; text-align: center; margin: 10px 0;">${warehouse}</h3>`;
+                
+                // Ordenar localizações dentro da seção
+                const sortedLocations = locationsBySection[warehouse].sort((a, b) => {
+                    // Ordenar por localização: primeiro por letra, depois por número
+                    const aParts = a.local.match(/([A-Z]+)(\d+)([A-Z]+)/);
+                    const bParts = b.local.match(/([A-Z]+)(\d+)([A-Z]+)/);
+                    
+                    if (aParts && bParts) {
+                        // Comparar letra
+                        if (aParts[1] !== bParts[1]) {
+                            return aParts[1].localeCompare(bParts[1]);
+                        }
+                        // Comparar número
+                        const numA = parseInt(aParts[2]);
+                        const numB = parseInt(bParts[2]);
+                        if (numA !== numB) {
+                            return numA - numB;
+                        }
+                        // Comparar sufixo
+                        return aParts[3].localeCompare(bParts[3]);
+                    }
+                    return a.local.localeCompare(b.local);
+                });
+                
+                sortedLocations.forEach(loc => {
+                    const locationDiv = document.createElement('div');
+                    locationDiv.className = `location ${stock[loc.local] ? 'occupied' : 'empty'}`;
+                    locationDiv.dataset.location = loc.local;
+                    
+                    locationDiv.innerHTML = `
+                        <div class="location-code">${loc.local}</div>
+                        ${stock[loc.local] ? 
+                            `<div class="location-ref">${stock[loc.local].ref}</div>
+                             <div class="location-qty">${stock[loc.local].qty}</div>` : 
+                            '<div class="location-ref">Vazio</div>'
+                        }
+                    `;
+                    
+                    locationDiv.addEventListener('click', () => {
+                        elements.locationInput.value = loc.local;
+                        if (stock[loc.local]) {
+                            elements.productSelect.value = stock[loc.local].ref;
+                        }
+                        highlightLocation(loc.local);
+                    });
+                    
+                    elements.warehouseGrid.appendChild(locationDiv);
+                });
+            });
+        }
+        
+        // Renderizar tabela de estoque
+        function renderStockTable() {
+            elements.stockTableBody.innerHTML = '';
+            
+            Object.keys(stock).forEach(loc => {
+                const item = stock[loc];
+                const row = document.createElement('tr');
+                
+                // Procurar informações completas da localização
+                const locationInfo = locations.find(l => l.local === loc);
+                
+                row.innerHTML = `
+                    <td>${loc}</td>
+                    <td>${locationInfo ? locationInfo.cod : 'N/A'}</td>
+                    <td>${locationInfo ? locationInfo.armazem : 'N/A'}</td>
+                    <td>${item.ref}</td>
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                `;
+                
+                elements.stockTableBody.appendChild(row);
+            });
+        }
+        
+        // Renderizar tabela de movimentações
+        async function renderMovements() {
+            try {
+                const response = await fetch(`${API_BASE}/movements`);
+                const movements = await response.json();
+                
+                elements.movementsTableBody.innerHTML = '';
+                
+                movements.forEach(movement => {
+                    const row = document.createElement('tr');
+                    
+                    // Formatar a data
+                    const date = new Date(movement.created_at);
+                    const formattedDate = date.toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    // Determinar classe para tipo de movimentação
+                    const typeClass = movement.type === 'entry' ? 'movement-entry' : 'movement-exit';
+                    const typeText = movement.type === 'entry' ? 'Entrada' : 'Saída';
+                    
+                    row.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td>${movement.location}</td>
+                        <td>${movement.ref}</td>
+                        <td>${movement.name}</td>
+                        <td class="${typeClass}">${typeText}</td>
+                        <td>${movement.quantity}</td>
+                    `;
+                    
+                    elements.movementsTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar movimentações:', error);
+                showNotification('Erro ao carregar histórico de movimentações', 'error');
+            }
+        }
+        
+        // Destacar localização na grade
+        function highlightLocation(locationCode) {
+            // Remover destaque anterior
+            document.querySelectorAll('.location').forEach(el => {
+                el.classList.remove('highlight');
+            });
+            
+            // Adicionar destaque à localização selecionada
+            const locationEl = document.querySelector(`.location[data-location="${locationCode}"]`);
+            if (locationEl) {
+                locationEl.classList.add('highlight');
+                
+                // Rolar para a localização
+                locationEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        // Registrar movimentação
+        async function registerMovement(type) {
+            const locationCode = elements.locationInput.value.trim();
+            const productRef = elements.productSelect.value;
+            const quantity = elements.quantityInput.value;
+            
+            if (!locationCode || !productRef || !quantity) {
+                showNotification('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/movement`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        location: locationCode,
+                        product: productRef,
+                        quantity: parseInt(quantity),
+                        type: type
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`Movimentação de ${type === 'entry' ? 'entrada' : 'saída'} registrada com sucesso!`);
+                    
+                    // Limpar campos
+                    elements.quantityInput.value = '1';
+                    
+                    // Recarregar dados
+                    await loadInitialData();
+                    
+                    // Recarregar também as movimentações, se a aba estiver ativa
+                    if (document.getElementById('movements-tab').classList.contains('active')) {
+                        await renderMovements();
+                    }
+                    
+                    // Destacar localização
+                    highlightLocation(locationCode);
+                } else {
+                    showNotification(data.error || `Erro ao registrar ${type === 'entry' ? 'entrada' : 'saída'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showNotification('Erro de conexão', 'error');
+            }
+        }
+        
+        // Exportar CSV
+        function exportCSV() {
+            window.location.href = `${API_BASE}/export/csv`;
+            showNotification('Exportando CSV...');
+        }
+        
+        // Filtrar localizações
+        function filterLocations() {
+            const searchTerm = elements.searchInput.value.toLowerCase();
+            
+            document.querySelectorAll('.location').forEach(el => {
+                const locationCode = el.dataset.location.toLowerCase();
+                if (locationCode.includes(searchTerm)) {
+                    el.style.display = 'flex';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+        
+        // Trocar entre abas
+        function switchTab(tabName) {
+            // Remover classe ativa das abas
+            elements.tabs.forEach(tab => tab.classList.remove('active'));
+            elements.tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Adicionar classe ativa à aba selecionada
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Carregar dados específicos da aba se necessário
+            if (tabName === 'movements') {
+                renderMovements();
+            }
+        }
+        
+        // Event Listeners
+        elements.entryBtn.addEventListener('click', () => registerMovement('entry'));
+        elements.exitBtn.addEventListener('click', () => registerMovement('exit'));
+        elements.exportBtn.addEventListener('click', exportCSV);
+        elements.searchInput.addEventListener('input', filterLocations);
+        
+        // Troca de abas
+        elements.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                switchTab(tabName);
+            });
+        });
+        
+        // Função para importar produtos via CSV
+        async function importProducts() {
+            const fileInput = document.getElementById('productFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Selecione um arquivo CSV', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                
+                if (lines.length < 2) {
+                    showNotification('Arquivo CSV vazio ou inválido', 'error');
+                    return;
+                }
+                
+                // Verificar cabeçalho
+                const header = lines[0].toLowerCase().trim();
+                if (!header.includes('ref') || !header.includes('name')) {
+                    showNotification('Formato CSV inválido. Cabeçalhos esperados: ref,name', 'error');
+                    return;
+                }
+                
+                // Processar linhas
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const [ref, name] = line.split(',').map(item => item.trim().replace(/"/g, ''));
+                    
+                    if (!ref || !name) continue;
+                    
+                    try {
+                        // Verificar se o produto já existe
+                        const exists = products.some(p => p.ref === ref);
+                        if (exists) {
+                            showNotification(`Produto ${ref} já existe e foi ignorado`, 'error');
+                            continue;
+                        }
+                        
+                        const response = await fetch(`${API_BASE}/products`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ ref, name })
+                        });
+                        
+                        if (response.ok) {
+                            showNotification(`Produto ${ref} importado com sucesso`);
+                        } else {
+                            const data = await response.json();
+                            showNotification(`Erro ao importar ${ref}: ${data.error}`, 'error');
+                        }
+                    } catch (error) {
+                        showNotification(`Erro ao processar ${ref}: ${error.message}`, 'error');
+                    }
+                }
+                
+                // Recarregar dados
+                await loadInitialData();
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Função para importar localizações via CSV
+        async function importLocations() {
+            const fileInput = document.getElementById('locationFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Selecione um arquivo CSV', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                
+                if (lines.length < 2) {
+                    showNotification('Arquivo CSV vazio ou inválido', 'error');
+                    return;
+                }
+                
+                // Verificar cabeçalho
+                const header = lines[0].toLowerCase().trim();
+                if (!header.includes('cod') || !header.includes('local')) {
+                    showNotification('Formato CSV inválido. Cabeçalhos esperados: COD,LOCAL,ARMAZEM', 'error');
+                    return;
+                }
+                
+                // Processar linhas
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const [cod, local, armazem = 'LOG'] = line.split(',').map(item => item.trim().replace(/"/g, ''));
+                    
+                    if (!cod || !local) continue;
+                    
+                    try {
+                        // Verificar se a localização já existe
+                        const exists = locations.some(l => l.cod === cod || l.local === local);
+                        if (exists) {
+                            showNotification(`Localização ${local} (código: ${cod}) já existe e foi ignorada`, 'error');
+                            continue;
+                        }
+                        
+                        const response = await fetch(`${API_BASE}/locations`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ cod, local, armazem })
+                        });
+                        
+                        if (response.ok) {
+                            showNotification(`Localização ${local} importada com sucesso`);
+                        } else {
+                            const data = await response.json();
+                            showNotification(`Erro ao importar ${local}: ${data.error}`, 'error');
+                        }
+                    } catch (error) {
+                        showNotification(`Erro ao processar ${local}: ${error.message}`, 'error');
+                    }
+                }
+                
+                // Recarregar dados
+                await loadInitialData();
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Função para adicionar produto manualmente
+        async function addProduct() {
+            const ref = document.getElementById('newProductRef').value.trim();
+            const name = document.getElementById('newProductName').value.trim();
+            
+            if (!ref || !name) {
+                showNotification('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                // Verificar se o produto já existe
+                const exists = products.some(p => p.ref === ref);
+                if (exists) {
+                    showNotification(`Produto ${ref} já existe`, 'error');
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE}/products`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ref, name })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`Produto ${ref} adicionado com sucesso!`);
+                    document.getElementById('newProductRef').value = '';
+                    document.getElementById('newProductName').value = '';
+                    
+                    // Recarregar dados
+                    await loadInitialData();
+                } else {
+                    showNotification(data.error || 'Erro ao adicionar produto', 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão', 'error');
+            }
+        }
+        
+        // Função para adicionar localização manualmente
+        async function addLocation() {
+            const cod = document.getElementById('newLocationCod').value.trim();
+            const local = document.getElementById('newLocationLocal').value.trim();
+            const armazem = document.getElementById('newLocationArmazem').value.trim() || 'LOG';
+            
+            if (!cod || !local) {
+                showNotification('Preencha os campos obrigatórios (Código e Localização)', 'error');
+                return;
+            }
+            
+            try {
+                // Verificar se a localização já existe
+                const exists = locations.some(l => l.cod === cod || l.local === local);
+                if (exists) {
+                    showNotification(`Localização ${local} (código: ${cod}) já existe`, 'error');
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE}/locations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cod, local, armazem })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`Localização ${local} adicionada com sucesso!`);
+                    document.getElementById('newLocationCod').value = '';
+                    document.getElementById('newLocationLocal').value = '';
+                    document.getElementById('newLocationArmazem').value = 'LOG';
+                    
+                    // Recarregar dados
+                    await loadInitialData();
+                } else {
+                    showNotification(data.error || 'Erro ao adicionar localização', 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão', 'error');
+            }
+        }
+        
+        // Inicializar a aplicação
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadInitialData();
+            
+            // Carregar movimentações se a aba estiver ativa
+            if (document.getElementById('movements-tab').classList.contains('active')) {
+                await renderMovements();
+            }
+            
+            // Atualizar número da porta exibido
+            document.getElementById('currentPort').textContent = window.location.port || '5000';
+            
+            // Adicionar event listeners para os botões de importação
+            document.getElementById('importProductsBtn').addEventListener('click', importProducts);
+            document.getElementById('importLocationsBtn').addEventListener('click', importLocations);
+            document.getElementById('addProductBtn').addEventListener('click', addProduct);
+            document.getElementById('addLocationBtn').addEventListener('click', addLocation);
+        });
+    </script>
+</body>
+</html>
